@@ -1,11 +1,11 @@
 ---
 name: llm-wiki-promote
-description: Promote knowledge from wiki/daily/ into curated wiki/*.md pages through interactive dialogue. Use when user invokes /llm-wiki-promote or asks to promote daily knowledge into wiki pages.
+description: Autonomously promote knowledge from wiki/daily/ into curated wiki/*.md pages (Audit Trail Tier 1, no per-candidate approval). Use when user invokes /llm-wiki-promote or asks to promote daily knowledge into wiki pages.
 ---
 
 # llm-wiki-promote
 
-`wiki/daily/*.md` を読み、wiki 昇格すべきトピックを抽出してユーザーと対話的に `wiki/*.md` を作成・更新する。**半自動**（候補提示 → ユーザー承認 → 書き込み）。
+`wiki/daily/*.md` を読み、wiki 昇格すべきトピックを抽出して `wiki/*.md` に**自律的に書き込む**（Audit Trail Tier 1: 事前承認なし、git revert で事後可逆）。逐次承認は挟まない。誤昇格は `git diff` で気付いて `git revert` するのが正しい運用。
 
 ## 実行手順
 
@@ -35,28 +35,19 @@ find wiki/daily -maxdepth 1 -type f -name '????-??-??.md' -print 2>/dev/null \
 
 これにより**単発でも知識密度が高い設計判断**を拾える。一時的なメモや単発の事実確認は密度不足で自然に落ちる。
 
-### 3. ユーザーへの候補提示
+### 3. 昇格候補を順に書き込む
 
-候補を 1 件ずつ提示し、それぞれ承認を取る:
+ステップ 2 で選定した候補（1〜3 件）を、ユーザー確認を挟まず順に書き込む。1 ターンで複数ページを書き込んでよいが、**1 候補ずつ完結させる**（書き込み → log 追記 → 次の候補、の順）。これは部分失敗時のロールバック粒度を保つため。
 
-```
-## 候補 1/N: <タイトル案>
-- 提案ファイル名: wiki/<slug>.md（新規 / 既存ページ更新）
-- 1 段落の概要: ...
-- 引用元 daily: wiki/daily/YYYY-MM-DD.md（複数なら列挙）
+**禁止事項（Tier 越境ガード）**: 以下のパスには書き込まない。これらが必要に見える場合は wiki/log.md に「<slug> は Tier 3 相当と判定したため保留」と記録して当該候補をスキップする:
 
-承認しますか? (yes / no / edit-title / skip)
-```
-
-ユーザーの応答に従う:
-
-- `yes` → ステップ 4 へ進む
-- `no` / `skip` → 候補をスキップ、次の候補へ
-- `edit-title` → ユーザーから新タイトルを聞いて再提示
+- `CLAUDE.md`（プロジェクト方針はユーザー判断）
+- `.claude/settings.json`（権限設定はユーザー判断）
+- `wiki/` 以外のディレクトリ（repo 構造変更はユーザー判断）
 
 ### 4. wiki ページの書き込み
 
-承認されたら、以下の Karpathy LLM Wiki 形式で書く:
+以下の Karpathy LLM Wiki 形式で書く:
 
 ```markdown
 # <タイトル>
@@ -108,6 +99,7 @@ find wiki/daily -maxdepth 1 -type f -name '????-??-??.md' -print 2>/dev/null \
 ```
 
 > **重複防止**: 同一行があれば追記しない:
+>
 > ```bash
 > LINE="[$(date +%Y-%m-%d)] promote | $slug.md"
 > grep -Fqx "$LINE" wiki/log.md 2>/dev/null || printf '%s\n' "$LINE" >> wiki/log.md
@@ -115,8 +107,8 @@ find wiki/daily -maxdepth 1 -type f -name '????-??-??.md' -print 2>/dev/null \
 
 ## ルール
 
-- **1 ターンで複数ページを書かない**（候補ごとに承認を取る）
-- ユーザーが `skip` / `no` と答えた候補は今回はスキップ（次回再判定）
+- **1 ターンで複数ページ書いてよい**が、1 候補ずつ完結させる（書き込み → log 追記 → 次の候補）
+- 自律実行: yes/no 承認は挟まない（Audit Trail Tier 1）。Tier 越境（wiki 配下以外）だけは禁止
 - 既存 wiki ページとの矛盾は両方残し新旧を注記（上記テンプレ参照）
 - 失敗の修正試行は 3 回まで。それ以上は手動編集を案内する
 - 機密情報（API キー、トークン、メールアドレス等）は出力から除外する
