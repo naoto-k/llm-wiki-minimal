@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*~
+
+# Node (defensive — repo has no Node code, but contributors may add)
+node_modules/
+
+# Local environment
+.env
+.env.local
+.envrc
