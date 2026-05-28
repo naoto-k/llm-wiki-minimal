@@ -138,10 +138,10 @@ MIT
 
 ## トラブルシュート
 
-| 症状                               | 原因                                                    | 対処                                                  |
-| ---------------------------------- | ------------------------------------------------------- | ----------------------------------------------------- |
-| `jq が見つかりません`              | jq 未インストール                                       | `brew install jq`                                     |
-| `raw/sessions/` に何もできない     | Stop hook が settings.json に登録されてない             | 手順 2 を再確認、Claude Code 再起動                   |
-| サブディレクトリ起動で誤配置       | project root 検出が `.git` / `raw+wiki` に依存          | プロジェクトルートで `mkdir -p raw wiki` してから起動 |
-| skill が呼べない                   | symlink が壊れている、または `~/.claude/skills/` の権限 | `ls -la ~/.claude/skills/llm-wiki-*` で確認           |
-| `/llm-wiki-promote` で候補が出ない | daily が無い or 直近 7 件に該当データなし               | `/llm-wiki-build-daily` を先に走らせる                |
+| 症状                                              | 原因                                                    | 対処                                                  |
+| ------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------- |
+| `jq が見つかりません`                             | jq 未インストール                                       | `brew install jq`                                     |
+| `raw/sessions/` に何もできない                    | Stop hook が settings.json に登録されてない             | 手順 2 を再確認、Claude Code 再起動                   |
+| サブディレクトリ起動で誤配置                      | project root 検出が `.git` / `raw+wiki` に依存          | プロジェクトルートで `mkdir -p raw wiki` してから起動 |
+| skill が呼べない                                  | symlink が壊れている、または `~/.claude/skills/` の権限 | `ls -la ~/.claude/skills/llm-wiki-*` で確認           |
+| `/llm-wiki-promote` で `wiki/*.md` が生成されない | daily が無い or 直近 7 件に該当データなし               | `/llm-wiki-build-daily` を先に走らせる                |
